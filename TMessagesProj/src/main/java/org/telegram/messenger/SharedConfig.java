@@ -57,7 +57,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 import cn.hutool.core.util.StrUtil;
-import okhttp3.HttpUrl;
 import tw.nekomimi.nekogram.NekoConfig;
 import tw.nekomimi.nekogram.utils.AlertUtil;
 import tw.nekomimi.nekogram.utils.EnvUtil;
@@ -234,6 +233,7 @@ public class SharedConfig {
     public static byte[] pushAuthKey;
     public static byte[] pushAuthKeyId;
     public static boolean forceForumTabs;
+    public static boolean fastWallpaperDisabled;
 
     public static String directShareHash;
 
@@ -669,6 +669,7 @@ public class SharedConfig {
             allowBigEmoji = preferences.getBoolean("allowBigEmoji", true);
             useSystemBoldFont = preferences.getBoolean("useSystemBoldFont", false);
             forceForumTabs = preferences.getBoolean("forceForumTabs", false);
+            fastWallpaperDisabled = preferences.getBoolean("fastWallpaperDisabled", false);
             if (useSystemBoldFont) {
                 AndroidUtilities.mediumTypeface = null;
             }
@@ -1211,6 +1212,14 @@ public class SharedConfig {
         SharedPreferences preferences = MessagesController.getGlobalMainSettings();
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("forceForumTabs", forceForumTabs);
+        editor.apply();
+    }
+
+    public static void toggleFastWallpaperDisabled() {
+        fastWallpaperDisabled = !fastWallpaperDisabled;
+        SharedPreferences preferences = MessagesController.getGlobalMainSettings();
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("fastWallpaperDisabled", fastWallpaperDisabled);
         editor.apply();
     }
 

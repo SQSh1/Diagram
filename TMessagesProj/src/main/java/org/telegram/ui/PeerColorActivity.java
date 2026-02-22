@@ -423,49 +423,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                             view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                             break;
                         case VIEW_TYPE_GIFTS_EMPTY:
-                            LinearLayout layout = new LinearLayout(getContext());
-                            layout.setOrientation(LinearLayout.VERTICAL);
-                            layout.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
-
-                            BackupImageView imageView = new BackupImageView(getContext());
-                            imageView.setImageDrawable(new RLottieDrawable(R.raw.utyan_draw, "utyan_draw", dp(120), dp(120)));
-                            layout.addView(imageView, LayoutHelper.createLinear(120, 120, Gravity.CENTER_HORIZONTAL, 0, 6, 0, 0));
-
-                            TextView title = TextHelper.makeLinkTextView(getContext(), 14, Theme.key_windowBackgroundWhiteGrayText, false, resourceProvider);
-                            title.setGravity(Gravity.CENTER);
-                            title.setText(getString(type == PAGE_PROFILE ? R.string.Gift2PeerColorProfileEmptyTitle : R.string.Gift2PeerColorReplyEmptyTitle));
-                            layout.addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 64, 8, 64, 8));
-
-                            TextView subtitle = TextHelper.makeLinkTextView(getContext(), 14, Theme.key_chat_messageLinkIn, false, resourceProvider);
-                            subtitle.setGravity(Gravity.CENTER);
-                            subtitle.setText(AndroidUtilities.replaceArrows(AndroidUtilities.replaceSingleTag(getString(R.string.Gift2PeerColorEmptyButton), () -> {
-                                GiftSheet.Tabs tabs = null;
-                                for (int i = 0; i < listView.getChildCount(); ++i) {
-                                    final View child = listView.getChildAt(i);
-                                    if (child instanceof GiftSheet.Tabs) {
-                                        tabs = (GiftSheet.Tabs) child;
-                                    }
-                                }
-                                if (tabs != null && Page.this.tabs.size() > 1) {
-                                    tabs.setSelected(1, true);
-                                    selectedTabGift = index2gift.get(1);
-                                    if (selectedTabGift == null) {
-                                        if (resaleGifts != null) {
-                                            resaleGifts.cancel();
-                                            resaleGifts = null;
-                                        }
-                                    } else if (resaleGifts == null || resaleGifts.gift_id != selectedTabGift.id) {
-                                        resaleGifts = new ResaleGiftsFragment.ResaleGiftsList(currentAccount, selectedTabGift.id, first -> update());
-                                        resaleGifts.load();
-                                    }
-                                    update();
-                                    final Page otherPage = viewPager.getCurrentPosition() == PAGE_NAME ? profilePage : namePage;
-                                    otherPage.update();
-                                }
-                            }), true, dp(8f / 3f), dp(1.33f), 1.0f));
-                            layout.addView(subtitle, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 32, 4, 32, 24));
-
-                            view = layout;
+                            view = new EmptyView(getContext());
                             break;
                     }
                     return new RecyclerListView.Holder(view);
@@ -501,6 +459,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                             TextCell textCell = (TextCell) holder.itemView;
                             textCell.updateColors();
                             textCell.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
+                            textCell.updateColors();
                             if (position == clearRow) {
                                 textCell.setText(getString(isChannel ? R.string.ChannelProfileColorReset : R.string.UserProfileColorReset), false);
                             }
@@ -510,6 +469,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                             if (position == giftsHeaderRow) {
                                 headerCell.setText(getString(R.string.UserProfileCollectibleHeader), false);
                             }
+                            headerCell.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                             break;
                         case VIEW_TYPE_GIFT:
                             GiftCell giftCell = (GiftCell) holder.itemView;
@@ -522,6 +482,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                                 selectedPeerCollectible != null && selectedPeerCollectible.collectible_id == gift.id,
                                 false
                             );
+                            giftCell.card.invalidate();
                             break;
                         case VIEW_TYPE_GIFT_FOREIGN:
                             GiftSheet.GiftCell giftCell2 = (GiftSheet.GiftCell) holder.itemView;
@@ -575,6 +536,18 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                                 final Page otherPage = viewPager.getCurrentPosition() == PAGE_NAME ? profilePage : namePage;
                                 otherPage.update();
                             });
+                            tabsView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
+                            tabsView.updateColors();
+                            break;
+                        case VIEW_TYPE_COLOR_PICKER:
+                            holder.itemView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
+                            ((PeerColorGrid) holder.itemView).updateColors();
+                            break;
+                        case VIEW_TYPE_ICON:
+                            ((SetReplyIconCell) holder.itemView).updateColors();
+                            break;
+                        case VIEW_TYPE_GIFTS_EMPTY:
+                            ((EmptyView) holder.itemView).updateColors();
                             break;
                     }
                 }
@@ -800,6 +773,65 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
             setWillNotDraw(false);
         }
 
+        public class EmptyView extends LinearLayout {
+
+            private final BackupImageView imageView;
+            private final TextView title;
+            private final TextView subtitle;
+
+            public EmptyView(Context context) {
+                super(context);
+
+                setOrientation(LinearLayout.VERTICAL);
+                setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
+
+                imageView = new BackupImageView(getContext());
+                imageView.setImageDrawable(new RLottieDrawable(R.raw.utyan_draw, "utyan_draw", dp(120), dp(120)));
+                addView(imageView, LayoutHelper.createLinear(120, 120, Gravity.CENTER_HORIZONTAL, 0, 6, 0, 0));
+
+                title = TextHelper.makeLinkTextView(getContext(), 14, Theme.key_windowBackgroundWhiteGrayText, false, resourceProvider);
+                title.setGravity(Gravity.CENTER);
+                title.setText(getString(type == PAGE_PROFILE ? R.string.Gift2PeerColorProfileEmptyTitle : R.string.Gift2PeerColorReplyEmptyTitle));
+                addView(title, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 64, 8, 64, 8));
+
+                subtitle = TextHelper.makeLinkTextView(getContext(), 14, Theme.key_chat_messageLinkIn, false, resourceProvider);
+                subtitle.setGravity(Gravity.CENTER);
+                subtitle.setText(AndroidUtilities.replaceArrows(AndroidUtilities.replaceSingleTag(getString(R.string.Gift2PeerColorEmptyButton), () -> {
+                    GiftSheet.Tabs tabs = null;
+                    for (int i = 0; i < listView.getChildCount(); ++i) {
+                        final View child = listView.getChildAt(i);
+                        if (child instanceof GiftSheet.Tabs) {
+                            tabs = (GiftSheet.Tabs) child;
+                        }
+                    }
+                    if (tabs != null && Page.this.tabs.size() > 1) {
+                        tabs.setSelected(1, true);
+                        selectedTabGift = index2gift.get(1);
+                        if (selectedTabGift == null) {
+                            if (resaleGifts != null) {
+                                resaleGifts.cancel();
+                                resaleGifts = null;
+                            }
+                        } else if (resaleGifts == null || resaleGifts.gift_id != selectedTabGift.id) {
+                            resaleGifts = new ResaleGiftsFragment.ResaleGiftsList(currentAccount, selectedTabGift.id, first -> update());
+                            resaleGifts.load();
+                        }
+                        update();
+                        final Page otherPage = viewPager.getCurrentPosition() == PAGE_NAME ? profilePage : namePage;
+                        otherPage.update();
+                    }
+                }), true, dp(8f / 3f), dp(1.33f), 1.0f));
+                addView(subtitle, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 32, 4, 32, 24));
+            }
+
+            public void updateColors() {
+                setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
+                title.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteGrayText));
+                subtitle.setTextColor(getThemedColor(Theme.key_chat_messageLinkIn));
+                subtitle.setLinkTextColor(getThemedColor(Theme.key_chat_messageLinkIn));
+            }
+        }
+
         private int actionBarHeight;
 
         @Override
@@ -900,6 +932,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
             }
 
             public void updateColors() {
+                setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                 textView.setTextColor(getThemedColor(Theme.key_windowBackgroundWhiteBlackText));
             }
 
@@ -1288,6 +1321,8 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 } else if (view instanceof GiftSheet.Tabs) {
                     view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     ((GiftSheet.Tabs) view).updateColors();
+                } else if (view instanceof EmptyView) {
+                    ((EmptyView) view).updateColors();
                 }
             });
         }
@@ -1589,7 +1624,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
         backButton.setImageResource(R.drawable.ic_ab_back);
         backButton.setColorFilter(new PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN));
         backButton.setOnClickListener(v -> {
-            if (onBackPressed()) {
+            if (onBackPressed(true)) {
                 finishFragment();
             }
         });
@@ -1646,12 +1681,12 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
     }
 
     @Override
-    public boolean onBackPressed() {
+    public boolean onBackPressed(boolean invoked) {
         if (!isChannel && hasUnsavedChanged() && getUserConfig().isPremium()) {
-            showUnsavedAlert();
+            if (invoked) showUnsavedAlert();
             return false;
         }
-        return super.onBackPressed();
+        return super.onBackPressed(invoked);
     }
 
     @Override
@@ -1785,7 +1820,10 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 } else {
                     req.flags |= 4;
                     req.color = new TLRPC.TL_peerColor();
-                    req.color.color = me.color.color = namePage.selectedColor;
+                    req.color.flags |= 1;
+                    req.color.color = namePage.selectedColor;
+                    me.color.flags |= 1;
+                    me.color.color = namePage.selectedColor;
                     if (namePage.selectedEmoji != 0) {
                         req.flags |= 1;
                         me.color.flags |= 2;
@@ -1805,7 +1843,7 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
             ) {
                 applyingProfile = true;
                 if (me.profile_color == null) {
-                    me.profile_color = new TLRPC.PeerColor();
+                    me.profile_color = new TLRPC.TL_peerColor();
                 }
                 TL_account.updateColor req = new TL_account.updateColor();
                 req.for_profile = true;
@@ -1813,13 +1851,14 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                 if (profilePage.selectedColor < 0) {
                     me.profile_color.flags &=~ 1;
                 } else {
-                    me.profile_color.flags |= 1;
                     if (req.color == null) {
                         req.flags |= 4;
                         req.color = new TLRPC.TL_peerColor();
                     }
                     req.color.flags |= 1;
-                    req.color.color = me.profile_color.color = profilePage.selectedColor;
+                    req.color.color = profilePage.selectedColor;
+                    me.profile_color.flags |= 1;
+                    me.profile_color.color = profilePage.selectedColor;
                 }
                 if (profilePage.selectedEmoji != 0) {
                     req.flags |= 1;
