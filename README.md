@@ -7,6 +7,9 @@ Nagram is a third-party Telegram client based on [NekoX](https://github.com/Neko
 - Releases: <https://github.com/NextAlone/Nagram/releases>
 - Issues here: <https://github.com/NextAlone/Nagram/issues>
 
+# Nagram X 
+- the more advanced and optimized version of Ngram called Ngram X.
+- Download [nagram X](https://github.com/risin42/NagramX/releases)
 ## Additional feature over Nagram
 
 1. Nice icon (thanks to MaitungTM)
