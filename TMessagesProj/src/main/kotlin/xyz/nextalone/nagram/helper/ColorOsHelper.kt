@@ -3,6 +3,7 @@ package xyz.nextalone.nagram.helper
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.text.TextUtils
 import android.util.Log
 import android.view.View
@@ -23,13 +24,16 @@ object ColorOsHelper {
         return true
     }
     fun startColorOsAiService(view: View, text: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return
+        }
         try {
             val intent = Intent().apply {
-                `package` = "com.heytap.speechassist"
-                action = Intent.ACTION_SEND
+                `package` = "com.oplus.aiwriter"
+                action = Intent.ACTION_PROCESS_TEXT
                 type = "text/plain"
-                putExtra("open_with_zoomwindow", true)
-                putExtra("android.intent.extra.TEXT", text)
+                putExtra("android.intent.extra.PROCESS_TEXT", text)
+                putExtra("extra_is_edittext_view", true)
             }
             view.context.startActivity(intent)
         } catch (e: Exception) {

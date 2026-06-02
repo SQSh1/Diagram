@@ -66,6 +66,7 @@ import tw.nekomimi.nekogram.NekoConfig;
 public final class BulletinFactory {
 
     public static BulletinFactory of(BaseFragment fragment) {
+        if (fragment == null) return global();
         return new BulletinFactory(fragment);
     }
 
@@ -430,6 +431,10 @@ public final class BulletinFactory {
     }
 
     public Bulletin createSimpleBulletin(int iconRawId, CharSequence text, CharSequence button, int duration, Runnable onButtonClick) {
+        return createSimpleBulletin(iconRawId, text, button, duration, false, onButtonClick);
+    }
+
+    public Bulletin createSimpleBulletin(int iconRawId, CharSequence text, CharSequence button, int duration, boolean icon, Runnable onButtonClick) {
         final Bulletin.LottieLayout layout = new Bulletin.LottieLayout(getContext(), resourcesProvider);
         if (iconRawId != 0) {
             layout.setAnimation(iconRawId, 36, 36);
@@ -442,7 +447,7 @@ public final class BulletinFactory {
         layout.textView.setSingleLine(false);
         layout.textView.setMaxLines(3);
         layout.textView.setText(text);
-        layout.setButton(new Bulletin.UndoButton(getContext(), true, resourcesProvider).setText(button).setUndoAction(onButtonClick));
+        layout.setButton(new Bulletin.UndoButton(getContext(), true, icon, resourcesProvider).setText(button).setUndoAction(onButtonClick));
         return create(layout, duration);
     }
 
@@ -529,7 +534,7 @@ public final class BulletinFactory {
             layout = singleLineLayout;
         }
         layout.setTimer();
-        layout.setButton(new Bulletin.UndoButton(getContext(), true, textAndIcon, resourcesProvider).setText(LocaleController.getString(R.string.Undo)).setUndoAction(onUndo).setDelayedAction(onAction));
+        layout.setButton(new Bulletin.UndoButton(getContext(), true, textAndIcon, resourcesProvider).setText(LocaleController.getString(R.string.UndoNoCaps)).setUndoAction(onUndo).setDelayedAction(onAction));
         return create(layout, Bulletin.DURATION_PROLONG);
     }
 
@@ -611,7 +616,7 @@ public final class BulletinFactory {
         }
 
         if (undoObject != null) {
-            layout.setButton(new Bulletin.UndoButton(getContext(), true, resourcesProvider).setText(LocaleController.getString(R.string.Undo)).setUndoAction(undoObject.onUndo).setDelayedAction(undoObject.onAction));
+            layout.setButton(new Bulletin.UndoButton(getContext(), true, resourcesProvider).setText(LocaleController.getString(R.string.UndoNoCaps)).setUndoAction(undoObject.onUndo).setDelayedAction(undoObject.onAction));
         }
 
         return create(layout, Bulletin.DURATION_PROLONG);
@@ -1267,7 +1272,7 @@ public final class BulletinFactory {
     }
 
     public boolean showForwardedBulletinWithTag(long did, int messagesCount) {
-        if (!UserConfig.getInstance(UserConfig.selectedAccount).isPremium()) {
+        if (!UserConfig.getInstance(UserConfig.selectedAccount).isPremium() || fragment == null) {
             return false;
         }
         final Bulletin.LottieLayoutWithReactions layout = new Bulletin.LottieLayoutWithReactions(fragment, messagesCount);
@@ -1303,7 +1308,11 @@ public final class BulletinFactory {
     }
 
     public static Bulletin createForwardedBulletin(Context context, BaseFragment fragment, FrameLayout containerLayout, int dialogsCount, long did, int messagesCount, int backgroundColor, int textColor, int duration, Runnable undoAction, Runnable delayedAction) {
-        final Bulletin.LottieLayout layout = UserConfig.getInstance(UserConfig.selectedAccount).isPremium() && fragment != null && dialogsCount <= 1 && did == UserConfig.getInstance(UserConfig.selectedAccount).clientUserId ?
+        return createForwardedBulletin(context, fragment, containerLayout, dialogsCount, did, messagesCount, backgroundColor, textColor, duration, false, undoAction, delayedAction);
+    }
+
+    public static Bulletin createForwardedBulletin(Context context, BaseFragment fragment, FrameLayout containerLayout, int dialogsCount, long did, int messagesCount, int backgroundColor, int textColor, int duration, boolean isSavedReminders, Runnable undoAction, Runnable delayedAction) {
+        final Bulletin.LottieLayout layout = UserConfig.getInstance(UserConfig.selectedAccount).isPremium() && fragment != null && dialogsCount <= 1 && did == UserConfig.getInstance(UserConfig.selectedAccount).clientUserId && !isSavedReminders ?
             new Bulletin.LottieLayoutWithReactions(fragment, messagesCount) :
             new Bulletin.LottieLayout(context, fragment != null ? fragment.getResourceProvider() : null, backgroundColor, textColor);
         final CharSequence text;
@@ -1320,7 +1329,7 @@ public final class BulletinFactory {
         if (dialogsCount <= 1) {
             if (did == UserConfig.getInstance(UserConfig.selectedAccount).clientUserId) {
                 if (messagesCount <= 1) {
-                    text = AndroidUtilities.replaceSingleTag(LocaleController.getString(R.string.FwdMessageToSavedMessages), -1, AndroidUtilities.REPLACING_TAG_TYPE_LINKBOLD, SavedMessagesController::openSavedMessages);
+                    text = AndroidUtilities.replaceSingleTag(LocaleController.getString(R.string.FwdMessageToSavedMessages), -1, AndroidUtilities.REPLACING_TAG_TYPE_LINKBOLD, isSavedReminders ? SavedMessagesController::openSavedMessagesReminders : SavedMessagesController::openSavedMessages);
                 } else {
                     text = AndroidUtilities.replaceSingleTag(LocaleController.getString(R.string.FwdMessagesToSavedMessages), -1, AndroidUtilities.REPLACING_TAG_TYPE_LINKBOLD, SavedMessagesController::openSavedMessages);
                 }
@@ -1444,6 +1453,26 @@ public final class BulletinFactory {
         }
         layout.textView.setText(AndroidUtilities.replaceTags(text));
         return Bulletin.make(fragment, layout, Bulletin.DURATION_SHORT);
+    }
+
+    @CheckResult
+    public static Bulletin createDissableSharingBulletin(BaseFragment fragment, String pendingUsername, boolean sharingDisabled) {
+        final Bulletin.LottieLayout layout = new Bulletin.LottieLayout(fragment.getParentActivity(), fragment.getResourceProvider());
+        final String text;
+        if (pendingUsername != null) {
+            text = LocaleController.formatString(sharingDisabled ?
+                R.string.DisableSharingToastDisabledPending :
+                R.string.DisableSharingToastEnabledPending, pendingUsername);
+        } else {
+            text = LocaleController.getString(sharingDisabled ?
+                R.string.DisableSharingToastDisabled :
+                R.string.DisableSharingToastEnabled);
+        }
+
+        layout.textView.setText(AndroidUtilities.replaceTags(text));
+        layout.setAnimation(sharingDisabled || pendingUsername != null ? R.raw.e_hand_2 : R.raw.contact_check);
+
+        return Bulletin.make(fragment, layout, Bulletin.DURATION_PROLONG);
     }
 
     @CheckResult

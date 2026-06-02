@@ -12,8 +12,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.core.graphics.ColorUtils;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,14 +38,12 @@ import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextRadioCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.BlurredRecyclerView;
-import org.telegram.ui.Components.Bulletin;
 import org.telegram.ui.Components.BulletinFactory;
 import org.telegram.ui.Components.FlickerLoadingView;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.Components.RecyclerListView;
 import org.telegram.ui.Components.SizeNotifierFrameLayout;
 import org.telegram.ui.Components.URLSpanNoUnderline;
-import org.telegram.ui.Components.inset.WindowInsetsStateHolder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,7 +71,6 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
     public static final int TYPE_CHECK2 = 16;
     public static final int TYPE_CHECKBOX2 = 17;
 
-    private final WindowInsetsStateHolder windowInsetsStateHolder = new WindowInsetsStateHolder(this::checkInsets);
 
     protected BlurredRecyclerView listView;
     protected BaseListAdapter listAdapter;
@@ -85,10 +80,6 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
     protected int rowCount;
     protected HashMap<String, Integer> rowMap = new HashMap<>(20);
     protected HashMap<Integer, String> rowMapReverse = new HashMap<>(20);
-
-    private void checkInsets() {
-        listView.setPadding(0, 0, 0, windowInsetsStateHolder.getCurrentNavigationBarInset());
-    }
 
     @Override
     public boolean onFragmentCreate() {
@@ -103,10 +94,6 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
     public View createView(Context context) {
         fragmentView = new BlurContentView(context);
         fragmentView.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundGray));
-        ViewCompat.setOnApplyWindowInsetsListener(fragmentView, (v, insets) -> {
-            windowInsetsStateHolder.setInsets(insets);
-            return WindowInsetsCompat.CONSUMED;
-        });
         SizeNotifierFrameLayout frameLayout = (SizeNotifierFrameLayout) fragmentView;
 
         actionBar.setDrawBlurBackground(frameLayout);
@@ -127,9 +114,9 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
 
         listAdapter = createAdapter(context);
 
+        listView.setSections(true);
         listView.setAdapter(listAdapter);
         listView.setOnItemClickListener(this::onItemClick);
-        listView.setClipToPadding(false);
         listView.setOnItemLongClickListener((view, position, x, y) -> {
             if (onItemLongClick(view, position, x, y)) {
                 return true;
@@ -149,6 +136,8 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             }
             return false;
         });
+
+        actionBar.setAdaptiveBackground(listView);
         return fragmentView;
     }
 
@@ -251,19 +240,6 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
         if (listAdapter != null) {
             listAdapter.notifyDataSetChanged();
         }
-
-        Bulletin.addDelegate(this, new Bulletin.Delegate() {
-            @Override
-            public int getBottomOffset(int tag) {
-                return windowInsetsStateHolder.getCurrentNavigationBarInset();
-            }
-        });
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        Bulletin.removeDelegate(this);
     }
 
     protected boolean hasWhiteActionBar() {
@@ -341,14 +317,24 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
             return type == TYPE_SETTINGS || type == TYPE_CHECK || type == TYPE_NOTIFICATION_CHECK || type == TYPE_DETAIL_SETTINGS || type == TYPE_TEXT | type == TYPE_CHECKBOX || type == TYPE_RADIO || type == TYPE_ACCOUNT || type == TYPE_EMOJI || type == TYPE_EMOJI_SELECTION || type == TYPE_CREATION  || type == TYPE_CHECK2 || type == TYPE_CHECKBOX2;
         }
 
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean partial) {
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, boolean partial, boolean divider) {
 
         }
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            var payload = holder.getPayload();
-            onBindViewHolder(holder, position, PARTIAL.equals(payload));
+            var partial = PARTIAL.equals(holder.getPayload());
+            var top = position > 0;
+            var bottom = position < getItemCount() - 1;
+            var type = holder.getItemViewType();
+            var nextType = position < getItemCount() - 1 ? getItemViewType(position + 1) : -1;
+            var divider = nextType != -1 && nextType != TYPE_SHADOW && nextType != TYPE_INFO_PRIVACY;
+            if (type == TYPE_SHADOW) {
+                ShadowSectionCell shadowCell = (ShadowSectionCell) holder.itemView;
+                shadowCell.setTopBottom(top, bottom);
+                return;
+            }
+            onBindViewHolder(holder, position, partial, divider);
         }
 
         @NonNull
@@ -361,62 +347,48 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
                     break;
                 case TYPE_SETTINGS:
                     view = new TextSettingsCell(mContext, resourcesProvider);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_CHECK:
                     view = new TextCheckCell(mContext, resourcesProvider);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_HEADER:
                     view = new HeaderCell(mContext, resourcesProvider);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_NOTIFICATION_CHECK:
                     view = new NotificationsCheckCell(mContext, resourcesProvider);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_DETAIL_SETTINGS:
                     view = new TextDetailSettingsCell(mContext);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_INFO_PRIVACY:
                     view = new TextInfoPrivacyCell(mContext, resourcesProvider);
-                    view.setBackground(Theme.getThemedDrawable(mContext, R.drawable.greydivider, getThemedColor(Theme.key_windowBackgroundGrayShadow)));
                     break;
                 case TYPE_TEXT:
                     view = new TextCell(mContext, resourcesProvider);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_CHECKBOX:
                     view = new TextCheckbox2Cell(mContext);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_RADIO:
                     view = new TextRadioCell(mContext);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_ACCOUNT:
                     view = new AccountCell(mContext);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_EMOJI:
                 case TYPE_EMOJI_SELECTION:
                     view = new EmojiSetCell(mContext, viewType == TYPE_EMOJI_SELECTION);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_CREATION:
                     CreationTextCell creationTextCell = new CreationTextCell(mContext, 70, resourcesProvider);
                     creationTextCell.startPadding = 61;
                     view = creationTextCell;
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_FLICKER:
                     view = new FlickerLoadingView(mContext, resourcesProvider);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_CHECK2:
                     view = new TextCheckCell2(mContext);
-                    view.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
                     break;
                 case TYPE_CHECKBOX2:
                     CheckBoxCell checkBoxCell = new CheckBoxCell(mContext, CheckBoxCell.TYPE_CHECK_BOX_ROUND, 21, getResourceProvider());
@@ -424,11 +396,11 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
                     checkBoxCell.getCheckBoxRound().setColor(Theme.key_switch2TrackChecked, Theme.key_radioBackground, Theme.key_checkboxCheck);
                     checkBoxCell.setEnabled(true);
                     view = checkBoxCell;
-                    view.setBackgroundColor(Theme.getColor(Theme.key_windowBackgroundWhite));
                     break;
             }
             //noinspection ConstantConditions
             view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
+
             return new RecyclerListView.Holder(view);
         }
     }
@@ -441,5 +413,10 @@ public abstract class BaseNekoSettingsActivity extends BaseFragment {
     @Override
     public boolean isSupportEdgeToEdge() {
         return true;
+    }
+    @Override
+    public void onInsets(int left, int top, int right, int bottom) {
+        listView.setPadding(0, 0, 0, bottom);
+        listView.setClipToPadding(false);
     }
 }

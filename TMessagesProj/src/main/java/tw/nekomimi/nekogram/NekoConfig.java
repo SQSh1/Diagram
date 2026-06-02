@@ -56,7 +56,7 @@ public class NekoConfig {
     public static ConfigItem lastUpdateCheckTime = addConfig("lastUpdateCheckTime", configTypeLong, 0L);
 
     // From NekoConfig
-    public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);
+//    public static ConfigItem useIPv6 = addConfig("IPv6", configTypeBool, false);
     public static ConfigItem hidePhone = addConfig("HidePhone", configTypeBool, true);
     public static ConfigItem ignoreBlocked = addConfig("IgnoreBlocked", configTypeBool, false);
     public static ConfigItem tabletMode = addConfig("TabletMode", configTypeInt, 0);
@@ -90,6 +90,7 @@ public class NekoConfig {
     public static ConfigItem unlimitedPinnedDialogs = addConfig("UnlimitedPinnedDialogs", configTypeBool, false);
     public static ConfigItem disablePhotoSideAction = addConfig("DisablePhotoViewerSideAction", configTypeBool, false);
     public static ConfigItem openArchiveOnPull = addConfig("OpenArchiveOnPull", configTypeBool, false);
+    public static ConfigItem disablePullDownSearch = addConfig("DisablePullDownSearch", configTypeBool, false);
     public static ConfigItem hideKeyboardOnChatScroll = addConfig("HideKeyboardOnChatScroll", configTypeBool, false);
     public static ConfigItem avatarBackgroundBlur = addConfig("BlurAvatarBackground", configTypeBool, false);
     public static ConfigItem avatarBackgroundDarken = addConfig("DarkenAvatarBackground", configTypeBool, false);
@@ -146,8 +147,6 @@ public class NekoConfig {
 
     public static ConfigItem useSystemDNS = addConfig("useSystemDNS", configTypeBool, false);
     public static ConfigItem customDoH = addConfig("customDoH", configTypeString, "");
-    public static ConfigItem hideProxyByDefault = addConfig("HideProxyByDefault", configTypeBool, false);
-    public static ConfigItem useProxyItem = addConfig("UseProxyItem", configTypeBool, true);
 
     public static ConfigItem disableAppBarShadow = addConfig("DisableAppBarShadow", configTypeBool, false);
     public static ConfigItem mediaPreview = addConfig("MediaPreview", configTypeBool, true);
@@ -464,10 +463,6 @@ public class NekoConfig {
             useSystemDNS.setConfigBool(preferences.getBoolean("useSystemDNS", false));
         if (preferences.contains("customDoH"))
             customDoH.setConfigString(preferences.getString("customDoH", ""));
-        if (preferences.contains("hide_proxy_by_default"))
-            hideProxyByDefault.setConfigBool(preferences.getBoolean("hide_proxy_by_default", false));
-        if (preferences.contains("use_proxy_item"))
-            useProxyItem.setConfigBool(preferences.getBoolean("use_proxy_item", true));
 
         if (preferences.contains("disableAppBarShadow"))
             disableAppBarShadow.setConfigBool(preferences.getBoolean("disableAppBarShadow", false));

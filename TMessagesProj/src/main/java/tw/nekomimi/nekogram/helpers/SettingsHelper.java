@@ -24,6 +24,7 @@ import tw.nekomimi.nekogram.settings.NekoExperimentalSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoGeneralSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoPasscodeSettingsActivity;
 import tw.nekomimi.nekogram.settings.NekoSettingsActivity;
+import xyz.nextalone.nagram.network.NetworkLogActivity;
 
 public class SettingsHelper {
 
@@ -51,7 +52,7 @@ public class SettingsHelper {
                     fragment = nekox_fragment = new NekoAccountSettingsActivity();
                     break;
                 case "about":
-                    fragment = new NekoSettingsActivity().startOnAbout();
+                    fragment = neko_fragment = new NekoSettingsActivity();
                     break;
                 case "chat":
                 case "chats":
@@ -68,6 +69,10 @@ public class SettingsHelper {
                 case "general":
                 case "g":
                     fragment = nekox_fragment = new NekoGeneralSettingsActivity();
+                    break;
+                case "network_logs":
+                case "n":
+                    fragment = new NetworkLogActivity();
                     break;
                 case "recent_dialogs":
                 case "r":

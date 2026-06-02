@@ -20,6 +20,7 @@ import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.icu.text.RelativeDateTimeFormatter;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.Spannable;
@@ -28,12 +29,14 @@ import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
+import android.text.format.DateUtils;
 import android.util.Xml;
 import android.view.Gravity;
 
-import org.telegram.messenger.support.ArrayUtils;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 
+import org.telegram.messenger.support.ArrayUtils;
 import org.telegram.messenger.time.FastDateFormat;
 import org.telegram.tgnet.Vector;
 import org.telegram.ui.Components.TypefaceSpan;
@@ -101,6 +104,24 @@ public class LocaleController {
             }
         }
         return formatterDay;
+    }
+
+    private volatile FastDateFormat formatterDayWithSeconds;
+    public FastDateFormat getFormatterDayWithSeconds() {
+        if (formatterDayWithSeconds == null) {
+            synchronized (this) {
+                if (formatterDayWithSeconds == null) {
+                    final Locale locale = currentLocale == null ? Locale.getDefault() : currentLocale;
+                    String lang = locale.getLanguage();
+                    if (lang == null) {
+                        lang = "en";
+                    }
+                    lang = lang.toLowerCase();
+                    formatterDayWithSeconds = createFormatter(lang.toLowerCase().equals("ar") || lang.toLowerCase().equals("ko") ? locale : Locale.US, is24HourFormat ? getStringInternal("formatterDayWithSeconds24H", R.string.formatterDayWithSeconds24H) : getStringInternal("formatterDayWithSeconds12H", R.string.formatterDayWithSeconds12H), is24HourFormat ? "HH:mm:ss" : "h:mm:ss a");
+                }
+            }
+        }
+        return formatterDayWithSeconds;
     }
 
     private volatile FastDateFormat formatterConstDay;
@@ -238,6 +259,19 @@ public class LocaleController {
         return chatDate;
     }
 
+    private volatile FastDateFormat chatDateShort;
+    public FastDateFormat getChatDateShort() {
+        if (chatDateShort == null) {
+            synchronized (this) {
+                if (chatDateShort == null) {
+                    final Locale locale = currentLocale == null ? Locale.getDefault() : currentLocale;
+                    chatDateShort = createFormatter(locale, getStringInternal("chatDateShort", R.string.chatDateShort), "d MMM");
+                }
+            }
+        }
+        return chatDateShort;
+    }
+
     private volatile FastDateFormat chatFullDate;
     public FastDateFormat getChatFullDate() {
         if (chatFullDate == null) {
@@ -288,6 +322,19 @@ public class LocaleController {
             }
         }
         return formatterMonthYear;
+    }
+
+    private volatile FastDateFormat formatterMonthOnly;
+    public FastDateFormat getFormatterMonthOnly() {
+        if (formatterMonthOnly == null) {
+            synchronized (this) {
+                if (formatterMonthOnly == null) {
+                    final Locale locale = currentLocale == null ? Locale.getDefault() : currentLocale;
+                    formatterMonthOnly = createFormatter(locale, getStringInternal("formatterMonthOnly", R.string.formatterMonthOnly), "MMMM");
+                }
+            }
+        }
+        return formatterMonthOnly;
     }
 
     private volatile FastDateFormat formatterGiveawayCard;
@@ -649,6 +696,24 @@ public class LocaleController {
         languagesDict.put(localeInfo.shortName, localeInfo);
 
         localeInfo = new LocaleInfo();
+        localeInfo.name = "Українська";
+        localeInfo.nameEnglish = "Ukrainian";
+        localeInfo.shortName = localeInfo.pluralLangCode = "uk";
+        localeInfo.pathToFile = null;
+        localeInfo.builtIn = true;
+        languages.add(localeInfo);
+        languagesDict.put(localeInfo.shortName, localeInfo);
+
+        localeInfo = new LocaleInfo();
+        localeInfo.name = "Русский";
+        localeInfo.nameEnglish = "Russian";
+        localeInfo.shortName = localeInfo.pluralLangCode = "ru";
+        localeInfo.pathToFile = null;
+        localeInfo.builtIn = true;
+        languages.add(localeInfo);
+        languagesDict.put(localeInfo.shortName, localeInfo);
+
+        localeInfo = new LocaleInfo();
         localeInfo.name = "فارسی";
         localeInfo.nameEnglish = "Persian";
         localeInfo.shortName = localeInfo.pluralLangCode = "fa";
@@ -742,11 +807,10 @@ public class LocaleController {
 
         systemDefaultLocale = Locale.getDefault();
         is24HourFormat = DateFormat.is24HourFormat(ApplicationLoader.applicationContext);
+        LocaleInfo currentInfo = null;
+        boolean override = false;
 
-        Utilities.stageQueue.postRunnable(() -> {
-            LocaleInfo currentInfo = null;
-            boolean override = false;
-
+        try {
             try {
                 SharedPreferences preferences = MessagesController.getGlobalMainSettings();
                 String lang = preferences.getString("language", null);
@@ -785,8 +849,9 @@ public class LocaleController {
 
             AndroidUtilities.runOnUIThread(() -> currentSystemLocale = getSystemLocaleStringIso639());
 
-        });
-
+        } catch (Exception e) {
+            FileLog.e(e);
+        }
     }
 
     public static String getLanguageFlag(String countryCode) {
@@ -2155,14 +2220,14 @@ public class LocaleController {
         final StringBuilder stringBuilder = new StringBuilder();
         if (hours > 0) {
             if (stringBuilder.length() > 0) stringBuilder.append(":");
-            stringBuilder.append(hours > 10 ? "" : "0");
+            stringBuilder.append(hours >= 10? "" : "0");
             stringBuilder.append(hours);
         }
         if (stringBuilder.length() > 0) stringBuilder.append(":");
-        stringBuilder.append(minutes > 10 ? "" : "0");
+        stringBuilder.append(minutes >= 10 ? "" : "0");
         stringBuilder.append(minutes);
         if (stringBuilder.length() > 0) stringBuilder.append(":");
-        stringBuilder.append(seconds > 10 ? "" : "0");
+        stringBuilder.append(seconds >= 10 ? "" : "0");
         stringBuilder.append(seconds);
         return stringBuilder.toString();
     }
@@ -2263,6 +2328,9 @@ public class LocaleController {
     }
 
     public static String formatDate(long date) {
+        return formatDate(date, false);
+    }
+    public static String formatDate(long date, boolean withToday) {
         try {
             date *= 1000;
             Calendar rightNow = Calendar.getInstance();
@@ -2273,6 +2341,9 @@ public class LocaleController {
             int dateYear = rightNow.get(Calendar.YEAR);
 
             if (dateDay == day && year == dateYear) {
+                if (withToday) {
+                    return getString(R.string.ShortToday);
+                }
                 return getInstance().getFormatterDay().format(new Date(date));
             } else if (dateDay + 1 == day && year == dateYear) {
                 return getString("Yesterday", R.string.Yesterday);
@@ -2441,6 +2512,14 @@ public class LocaleController {
         return "LOC_ERR";
     }
 
+    public static String formatPollEndTime(int seconds, boolean resultsHidden) {
+        final String s = seconds < 86400 ?
+                formatShortDuration(seconds) :
+            formatPluralString("Days", seconds / 86400);
+
+        return formatString(resultsHidden ? R.string.PollResultsIn : R.string.PollEndsIn, s);
+    }
+
     public static String formatShortDuration2(int time) {
         final int minutes = time / 60;
         final int hours = time / 3600;
@@ -2587,7 +2666,7 @@ public class LocaleController {
                 if (usePersianCalendar) {
                     return LocaleController.formatString(R.string.formatDateAtTime, persianDate.getPersianMonthDay(), getInstance().formatterDay.format(new Date(date)));
                 } else {
-                    return LocaleController.formatString(R.string.formatDateAtTime, getInstance().getChatDate().format(new Date(date)), getInstance().getFormatterDay().format(new Date(date)));
+                    return LocaleController.formatString(R.string.formatDateAtTime, getInstance().getChatDateShort().format(new Date(date)), getInstance().getFormatterDay().format(new Date(date)));
                 }
             } else {
                 if (usePersianCalendar) {
@@ -2805,6 +2884,7 @@ public class LocaleController {
         formatterGiveawayMonthDay = null;
         formatterGiveawayMonthDayYear = null;
         formatterMonthYear = null;
+        formatterMonthOnly = null;
         formatterDayMonth = null;
         formatterYear = null;
         formatterYearMax = null;
@@ -2815,6 +2895,7 @@ public class LocaleController {
         formatterScheduleDay = null;
         formatterScheduleYear = null;
         formatterDay = null;
+        formatterDayWithSeconds = null;
         formatterConstDay = null;
         formatterStats = null;
         formatterBannedUntil = null;
@@ -4479,5 +4560,133 @@ public class LocaleController {
             FileLog.e(e);
         }
         return null;
+    }
+
+    public static String formatEntityFormattedDate(TLRPC.TL_messageEntityFormattedDate e) {
+        return formatEntityFormattedDate(e, System.currentTimeMillis(), Locale.getDefault(), false);
+    }
+
+    public static String formatEntityFormattedDate(TLRPC.TL_messageEntityFormattedDate e, boolean forceFull) {
+        return formatEntityFormattedDate(e, System.currentTimeMillis(), Locale.getDefault(), forceFull);
+    }
+
+    private static String formatEntityFormattedDate(
+            TLRPC.TL_messageEntityFormattedDate e,
+            long nowMillis,
+            Locale locale,
+            boolean forceFull
+    ) {
+        final long whenMillis = e.date * 1000L;
+
+        if (e.relative && !forceFull) {
+            return formatEntityFormattedDateRelative(whenMillis, nowMillis, locale);
+        }
+
+        String weekComponent = "";
+        String dateComponent = "";
+        String timeComponent = "";
+        forceFull |= e.flags == 0;
+
+        if (e.day_of_week) {
+            weekComponent = getInstance().getFormatterWeekLong().format(whenMillis);
+        }
+        if (forceFull) {
+            dateComponent = getInstance().getFormatterGiveawayCard().format(whenMillis);
+        } else if (e.long_date) {
+            dateComponent = getInstance().getChatFullDate().format(whenMillis);
+        } else if (e.short_date) {
+            dateComponent = getInstance().getFormatterYear().format(whenMillis);
+        }
+
+        if (forceFull) {
+            final Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(whenMillis);
+            final boolean hasSeconds = calendar.get(Calendar.SECOND) != 0;
+
+            timeComponent = hasSeconds ?
+                getInstance().getFormatterDayWithSeconds().format(whenMillis) :
+                getInstance().getFormatterDay().format(whenMillis);
+        } else if (e.long_time) {
+            timeComponent = getInstance().getFormatterDayWithSeconds().format(whenMillis);
+        } else if (e.short_time) {
+            timeComponent = getInstance().getFormatterDay().format(whenMillis);
+        }
+
+        final boolean hasWeek = !TextUtils.isEmpty(weekComponent);
+        final boolean hasDate = !TextUtils.isEmpty(dateComponent);
+        final boolean hasTime = !TextUtils.isEmpty(timeComponent);
+
+        if (!hasDate && !hasTime) {
+            return weekComponent;
+        }
+
+        String result;
+        if (hasDate && hasTime) {
+            result = formatString(R.string.formatDateAtTime, dateComponent, timeComponent);
+        } else {
+            result = hasDate ? dateComponent : timeComponent;
+        }
+        if (hasWeek) {
+            result = formatString(R.string.RelativeDateFormatterWeek2, weekComponent, result);
+        }
+        return result;
+    }
+
+    private static String formatEntityFormattedDateRelative(long whenMillis, long nowMillis, Locale locale) {
+        final long diffMillis = whenMillis - nowMillis;
+
+        // Prefer localized ICU relative formatting when available (API 24+).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return RelativeIcu.format(diffMillis, locale);
+        }
+
+        // Fallback: DateUtils (not perfect for seconds in some locales, but OK)
+        // Use 1 second resolution so near events don’t jump to minutes immediately.
+        return DateUtils.getRelativeTimeSpanString(
+            whenMillis,
+            nowMillis,
+            1000L,
+            DateUtils.FORMAT_ABBREV_RELATIVE
+        ).toString();
+    }
+
+    // -------- API 24+ localized relative formatter --------
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private static final class RelativeIcu {
+        static String format(long diffMillis, Locale locale) {
+            RelativeDateTimeFormatter f = RelativeDateTimeFormatter.getInstance(locale);
+
+            final boolean future = diffMillis > 0;
+            final long absSeconds = Math.max(1, Math.round(Math.abs(diffMillis) / 1000.0));
+            final RelativeDateTimeFormatter.RelativeUnit unit;
+            final long value;
+
+            if (absSeconds < 60) {
+                unit = RelativeDateTimeFormatter.RelativeUnit.SECONDS;
+                value = absSeconds;
+            } else if (absSeconds < 3600) {
+                unit = RelativeDateTimeFormatter.RelativeUnit.MINUTES;
+                value = Math.round(absSeconds / 60.0);
+            } else if (absSeconds < 86400) {
+                unit = RelativeDateTimeFormatter.RelativeUnit.HOURS;
+                value = Math.round(absSeconds / 3600.0);
+            } else if (absSeconds < 86400L * 30L) {
+                unit = RelativeDateTimeFormatter.RelativeUnit.DAYS;
+                value = Math.round(absSeconds / 86400.0);
+            } else if (absSeconds < 86400L * 365L) {
+                unit = RelativeDateTimeFormatter.RelativeUnit.MONTHS;
+                value = Math.round(absSeconds / (86400.0 * 30.0));
+            } else {
+                unit = RelativeDateTimeFormatter.RelativeUnit.YEARS;
+                value = Math.round(absSeconds / (86400.0 * 365.0));
+            }
+
+            RelativeDateTimeFormatter.Direction dir = future ?
+                RelativeDateTimeFormatter.Direction.NEXT :
+                RelativeDateTimeFormatter.Direction.LAST;
+
+            // "in X days" / "X days ago" in the user locale
+            return f.format(value, dir, unit);
+        }
     }
 }

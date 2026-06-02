@@ -608,7 +608,31 @@ object NaConfig {
         addConfig(
             "PushServiceTypeUnifiedGateway",
             ConfigItem.configTypeString,
-            "https://p2p.xtaolabs.com/"
+            "https://p2p.hoyolab.pp.ua/"
+        )
+    val pushServiceTypeUnifiedSimple =
+        addConfig(
+            "PushServiceTypeUnifiedSimple",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val pushServiceTypeUnifiedWebPushPrivateKey =
+        addConfig(
+            "PushServiceTypeUnifiedWebPushPrivateKey",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val pushServiceTypeUnifiedWebPushPublicKey =
+        addConfig(
+            "PushServiceTypeUnifiedWebPushPublicKey",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val pushServiceTypeUnifiedWebPushAuthSecret =
+        addConfig(
+            "PushServiceTypeUnifiedWebPushAuthSecret",
+            ConfigItem.configTypeString,
+            ""
         )
     val sendMp4DocumentAsVideo =
         addConfig(
@@ -920,12 +944,6 @@ object NaConfig {
             ConfigItem.configTypeBool,
             false
         )
-    val showRecentChatsInSidebar =
-        addConfig(
-            "ShowRecentChatsInSidebar",
-            ConfigItem.configTypeBool,
-            true
-        )
     val removeFavouriteStickersInRecentStickers =
         addConfig(
             "RemoveFavouriteStickersInRecentStickers",
@@ -986,6 +1004,30 @@ object NaConfig {
             ConfigItem.configTypeBool,
             true
         )
+    val localInlineBotRulesData =
+        addConfig(
+            "LocalInlineBotRulesData",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val localInlineBotRulesEnabled =
+        addConfig(
+            "LocalInlineBotRulesEnabled",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val disabledRemoteInlineBotRules =
+        addConfig(
+            "DisabledRemoteInlineBotRules",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val fixUrlAutoInlineBotSkipMediaPreview =
+        addConfig(
+            "FixUrlAutoInlineBotSkipMediaPreview",
+            ConfigItem.configTypeBool,
+            false
+        )
     val deepLxCustomApi =
         addConfig(
             "DeepLxCustomApi",
@@ -997,6 +1039,18 @@ object NaConfig {
             "DeepLFormality",
             ConfigItem.configTypeInt,
             0 // 0: default, 1: more formal, 2: less formal
+        )
+    val deepLApiKey =
+        addConfig(
+            "DeepLApiKey",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val deepLFreeApiKey =
+        addConfig(
+            "DeepLFreeApiKey",
+            ConfigItem.configTypeString,
+            ""
         )
     val summarizeTextButton =
         addConfig(
@@ -1014,7 +1068,13 @@ object NaConfig {
         addConfig(
             "LLMProvider",
             ConfigItem.configTypeInt,
-            0 // 0: OpenAI, 1: Gemini, 2: Groq, 3: DeepSeek, 4: xAI, 5: ZhipuAI
+            0
+        )
+    val llmApiFormat =
+        addConfig(
+            "LLMApiFormat",
+            ConfigItem.configTypeInt,
+            0
         )
     val llmApiKeys =
         addConfig(
@@ -1032,13 +1092,13 @@ object NaConfig {
         addConfig(
             "LLMOpenAIModel",
             ConfigItem.configTypeString,
-            "gpt-4o-mini"
+            "gpt-4.1-mini"
         )
     val llmGeminiModel =
         addConfig(
             "LLMGeminiModel",
             ConfigItem.configTypeString,
-            "gemini-2.0-flash-exp"
+            "gemini-2.5-flash"
         )
     val llmGroqModel =
         addConfig(
@@ -1056,7 +1116,7 @@ object NaConfig {
         addConfig(
             "LLMXAIModel",
             ConfigItem.configTypeString,
-            "grok-2-latest"
+            "grok-3-mini-fast"
         )
     val llmZhipuAIModel =
         addConfig(
@@ -1064,17 +1124,144 @@ object NaConfig {
             ConfigItem.configTypeString,
             "GLM-4-Flash"
         )
+    val llmMistralModel =
+        addConfig(
+            "LLMMistralModel",
+            ConfigItem.configTypeString,
+            "mistral-small-latest"
+        )
+    val llmOpenRouterModel =
+        addConfig(
+            "LLMOpenRouterModel",
+            ConfigItem.configTypeString,
+            "meta-llama/llama-3.3-70b-instruct"
+        )
+    val llmQwenModel =
+        addConfig(
+            "LLMQwenModel",
+            ConfigItem.configTypeString,
+            "qwen-turbo-latest"
+        )
+    val llmMoonshotModel =
+        addConfig(
+            "LLMMoonshotModel",
+            ConfigItem.configTypeString,
+            "moonshot-v1-8k"
+        )
+    val llmSiliconFlowModel =
+        addConfig(
+            "LLMSiliconFlowModel",
+            ConfigItem.configTypeString,
+            "Qwen/Qwen2.5-7B-Instruct"
+        )
+    val llmCustomModel =
+        addConfig(
+            "LLMCustomModel",
+            ConfigItem.configTypeString,
+            ""
+        )
     val llmSystemPrompt =
         addConfig(
             "LLMSystemPrompt",
             ConfigItem.configTypeString,
-            "You are a professional translation engine. Translate the text to {target_language}, keep the format."
+            ""
         )
     val llmTemperature =
         addConfig(
             "LLMTemperature",
             ConfigItem.configTypeString,
-            "0.3"
+            "0.7"
+        )
+    val mainTabsStyle =
+        addConfig(
+            "MainTabsStyle",
+            ConfigItem.configTypeInt,
+            0
+        )
+    val customIpStrategy =
+        addConfig(
+            "CustomIpStrategy",
+            ConfigItem.configTypeInt,
+            0
+        )
+    val customDialogsMenu =
+        addConfig(
+            "CustomDialogsMenu",
+            ConfigItem.configTypeInt,
+            0
+        )
+    val customDialogsMenuTheme =
+        addConfig(
+            "SwitchThemeToDay",
+            customDialogsMenu,
+            0,
+            true
+        )
+    val showRecentChatsInSidebar =
+        addConfig(
+            "ShowRecentChatsInSidebar",
+            ConfigItem.configTypeBool,
+            true
+        )
+    val customDialogsMenuNewGroup =
+        addConfig(
+            "NewGroup",
+            customDialogsMenu,
+            1,
+            true
+        )
+    val customDialogsMenuNewMessage =
+        addConfig(
+            "NewMessageTitle",
+            customDialogsMenu,
+            2,
+            false
+        )
+    val customDialogsMenuSavedMessages =
+        addConfig(
+            "SavedMessages",
+            customDialogsMenu,
+            3,
+            true
+        )
+    val customDialogsMenuSettings =
+        addConfig(
+            "Settings",
+            customDialogsMenu,
+            4,
+            true
+        )
+    val customDialogsMenuProxy =
+        addConfig(
+            "MenuProxyTitle",
+            customDialogsMenu,
+            5,
+            true
+        )
+    val customDialogsMenuAccount =
+        addConfig(
+            "AddAccount",
+            customDialogsMenu,
+            6,
+            false
+        )
+    val sidebarSettingsActivity =
+        addConfig(
+            "SidebarSettingsActivity",
+            ConfigItem.configTypeBool,
+            true
+        )
+    val compactMessageMenuOptions =
+        addConfig(
+            "CompactMessageMenuOptions",
+            ConfigItem.configTypeString,
+            ""
+        )
+    val hiddenMessageMenuOptions =
+        addConfig(
+            "HiddenMessageMenuOptions",
+            ConfigItem.configTypeString,
+            ""
         )
 
     private fun addConfig(
